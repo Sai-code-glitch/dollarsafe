@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LIFE_STAGES } from "@/lib/profile";
 import { PLANS } from "@/lib/plans";
+import { TOOLS } from "@/lib/tools";
 
 const stageIcons: Record<string, string> = {
   teen: "🎒",
@@ -94,6 +95,19 @@ export default function Home() {
               <h3 className="font-semibold text-slate-900">{t}</h3>
               <p className="mt-2 text-sm text-slate-600">{d}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pt-16">
+        <h2 className="text-2xl font-bold">Try a free calculator</h2>
+        <p className="mt-2 text-slate-600">No sign-up needed. The same math the coach uses.</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {TOOLS.map((t) => (
+            <Link key={t.slug} href={`/tools/${t.slug}`} className="card p-4 hover:border-brand-300">
+              <span className="font-medium text-slate-900">{t.title}</span>
+              <span className="mt-1 block text-xs text-slate-600">{t.summary}</span>
+            </Link>
           ))}
         </div>
       </section>
