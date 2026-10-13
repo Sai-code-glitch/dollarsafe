@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plan {
+  FREE
+  PLUS
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  NONE
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
+
+enum Role {
+  USER
+  ASSISTANT
+}
+
+model User {
+  id                   String             @id @default(cuid())
+  email                String             @unique
+  passwordHash         String
+  plan                 Plan               @default(FREE)
+  subscriptionStatus   SubscriptionStatus @default(NONE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  currentPeriodEnd     DateTime?
+  acceptedTermsAt      DateTime
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  sessions      Session[]
+  profiles      Profile[]
+  conversations Conversation[]
+  usage         UsageRecord[]
+  reports       Report[]
+  auditLogs     AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// A person whose finances the guidance is about. Premium (family) accounts can hold several,
+/// including teen profiles (13-17) managed by the adult account holder.
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String
+  birthYear       Int
+  state           String // two-letter US state / DC code
+  householdSize   Int      @default(1)
+  incomeBand      String // see INCOME_BANDS in src/lib/profile.ts
+  employment      String
+  goals           String[]
+  riskComfort     String   @default("medium")
+  notes           String   @default("") // user-supplied context, max 1,000 chars
+  isPrimary       Boolean  @default(false)
+  guardianConsent Boolean  @default(false) // required for minors
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  conversations Conversation[]
+  reports       Report[]
+
+  @@index([userId])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title     String    @default("New conversation")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@index([userId, updatedAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           Role
+  content        String
+  model          String?
+  inputTokens    Int          @default(0)
+  outputTokens   Int          @default(0)
+  flags          String[] // guardrail flags raised on this turn (recordkeeping)
+  toolCalls      Json? // calculator calls made while answering (recordkeeping)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model UsageRecord {
+  id           String @id @default(cuid())
+  userId       String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period       String // "YYYY-MM" (UTC)
+  messageCount Int    @default(0)
+  inputTokens  Int    @default(0)
+  outputTokens Int    @default(0)
+
+  @@unique([userId, period])
+}
+
+/// AI-generated monthly financial check-up (Premium).
+model Report {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  period    String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@unique([profileId, period])
+}
+
+/// Append-only log of security, billing and guardrail events.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String
+  detail    Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
+/// Stripe webhook idempotency.
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
