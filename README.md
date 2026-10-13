@@ -59,7 +59,7 @@ Local webhook testing: `stripe listen --forward-to localhost:3000/api/billing/we
 
 1. Create a Postgres database (Neon, Supabase, RDS, etc.) and set `DATABASE_URL`.
 2. Import the repo into Vercel. Set every variable from `.env.example` (`APP_URL` = your production URL; `SESSION_SECRET` and `CRON_SECRET` from `openssl rand -hex 32`).
-3. Build command: `npx prisma migrate deploy && npm run build`.
+3. Build command: set in `vercel.json` (`prisma migrate deploy && npm run build`), so database migrations run on every deploy.
 4. `vercel.json` schedules the check-up cron daily; Vercel sends `Authorization: Bearer $CRON_SECRET` automatically. On another host, call `GET /api/cron/monthly-checkup` daily with that header.
 5. Visit `/api/health`; it returns 200 only when the database is reachable and production config is complete.
 
