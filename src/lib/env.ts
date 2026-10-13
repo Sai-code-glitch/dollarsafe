@@ -7,7 +7,8 @@ function read(name: string): string | undefined {
 }
 
 export const env = {
-  appUrl: read("APP_URL") ?? "http://localhost:3000",
+  // Render sets RENDER_EXTERNAL_URL automatically, so a Render deploy needs no APP_URL.
+  appUrl: read("APP_URL") ?? read("RENDER_EXTERNAL_URL") ?? "http://localhost:3000",
   databaseUrl: read("DATABASE_URL") ?? "postgresql://dollarsafe:dollarsafe@localhost:5432/dollarsafe",
   sessionSecret: read("SESSION_SECRET") ?? "dev-only-insecure-session-secret-change-me",
   anthropicApiKey: read("ANTHROPIC_API_KEY"),
