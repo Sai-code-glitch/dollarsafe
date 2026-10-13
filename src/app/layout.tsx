@@ -3,11 +3,15 @@ import Link from "next/link";
 import "./globals.css";
 import { getCurrentUser } from "@/lib/auth";
 import { LogoutButton } from "@/components/LogoutButton";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.appUrl),
   title: { default: "Dollarsafe: AI money coach for every age", template: "%s · Dollarsafe" },
   description:
     "Dollarsafe is an AI money coach for every stage of life, from first paycheck to retirement. Budgeting, debt, saving, retirement accounts and taxes, explained for you.",
+  openGraph: { type: "website", siteName: "Dollarsafe", locale: "en_US" },
+  twitter: { card: "summary_large_image" },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               Dollarsafe
             </Link>
             <div className="flex items-center gap-3 whitespace-nowrap text-sm sm:gap-4">
+              <Link href="/tools" className="hidden text-slate-600 hover:text-slate-900 sm:inline">Free tools</Link>
               <Link href="/pricing" className="text-slate-600 hover:text-slate-900">Pricing</Link>
               {user ? (
                 <>
@@ -48,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               Consider a licensed professional before major decisions. <Link className="underline" href="/legal/disclosures">Full disclosures</Link>.
             </p>
             <p className="flex flex-wrap gap-4">
+              <Link className="underline" href="/tools">Free calculators</Link>
               <Link className="underline" href="/legal/terms">Terms</Link>
               <Link className="underline" href="/legal/privacy">Privacy</Link>
               <Link className="underline" href="/legal/disclosures">Disclosures</Link>

@@ -55,11 +55,19 @@ CI (`.github/workflows/ci.yml`) runs all three against a Postgres service.
 
 Local webhook testing: `stripe listen --forward-to localhost:3000/api/billing/webhook`.
 
+## Deploying for free (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sai-code-glitch/dollarsafe)
+
+Sign in to Render with GitHub, click the button, and approve. `render.yaml` creates the app and a Postgres database on free plans, generates the secrets, and runs migrations. Leave `ANTHROPIC_API_KEY` blank for demo mode or paste your key. Until Stripe keys are added, the free Starter plan works and paid plans show "opening soon".
+
+Free-plan limits: the app sleeps after 15 idle minutes (the next visit takes about a minute), the free database expires after 30 days, and the monthly check-up cron does not run. Move to paid plans before relying on it for paying customers.
+
 ## Deploying (Vercel + managed Postgres)
 
 1. Create a Postgres database (Neon, Supabase, RDS, etc.) and set `DATABASE_URL`.
 2. Import the repo into Vercel. Set every variable from `.env.example` (`APP_URL` = your production URL; `SESSION_SECRET` and `CRON_SECRET` from `openssl rand -hex 32`).
-3. Build command: `npx prisma migrate deploy && npm run build`.
+3. Build command: set in `vercel.json` (`prisma migrate deploy && npm run build`), so database migrations run on every deploy.
 4. `vercel.json` schedules the check-up cron daily; Vercel sends `Authorization: Bearer $CRON_SECRET` automatically. On another host, call `GET /api/cron/monthly-checkup` daily with that header.
 5. Visit `/api/health`; it returns 200 only when the database is reachable and production config is complete.
 
